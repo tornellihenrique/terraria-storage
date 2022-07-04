@@ -4,115 +4,96 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="terraria.jpg" />
     <title>Terraria Storage</title>
 
+    <!-- JQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Datatable -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css"
+    />
+    <script
+      type="text/javascript"
+      charset="utf8"
+      src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"
+    ></script>
+
+    <style>
+      .dataTables_length,
+      .dataTables_info,
+      .dataTables_wrapper .dataTables_paginate .paginate_button,
+      .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+      .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover,
+      .dataTables_wrapper .dataTables_paginate .ellipsis,
+      .dataTables_wrapper .dataTables_filter {
+        color: #fff !important;
+      }
+
+      .dataTables_wrapper .dataTables_length select option {
+        color: #000 !important;
+      }
+
+      #items tr {
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body class="bg-gray-800">
-    <div class="container mx-auto">
-      <h1 class="text-4xl text-white text-center uppercase p-5">
+    <div class="container mx-auto py-5">
+      <h1 class="text-4xl text-white text-center uppercase">
         Terraria Storage
       </h1>
-      <form class="flex items-center">
-        <label for="item-search" class="sr-only">Search for item</label>
-        <div class="relative w-full">
-          <div
-            class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none"
-          >
-            <svg
-              class="w-5 h-5 text-gray-500 dark:text-gray-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                clip-rule="evenodd"
-              ></path>
-            </svg>
-          </div>
-          <input
-            type="text"
-            id="item-search"
-            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            placeholder="Search for item"
-            required=""
-          />
-        </div>
-        <button
-          type="button"
-          class="p-2.5 ml-2 text-sm font-medium text-white bg-blue-700 rounded-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            ></path>
-          </svg>
-        </button>
-      </form>
-      <div class="border border-gray-600 my-4"></div>
-      <div id="items"></div>
+      <table id="items" class="display text-white w-full"></table>
     </div>
 
     <script>
       let items = [];
 
-      function search(filter) {
-        $('#items').empty();
+      $(document).ready(() => {
+        $.get('items.json', data => {
+          $.get('categoriesMapping.json', mapping => {
+            items = data;
 
-        const str = ''.concat(
-          items
-            .filter(i => (filter ? i['Name'].toLowerCase().indexOf(filter.toLowerCase()) !== -1 : true))
-            .map(
-              i => `
-          <div class="w-full flex flex-row rounded-lg bg-gray-700 shadow-lg">
-            <div
-              class="flex justify-center items-center"
-              style="width: 100px; height: 100px"
-            >
-              <img
-                class="w-10 h-10"
-                src="${i['Img URL'].replace('=image("', '').replace('")', '')}"
-              />
-            </div>
-            <div class="p-3 flex flex-col justify-between">
-              <h5 class="text-gray-900 text-xl font-medium text-gray-200">
-                ${i['Name']}
-              </h5>
-              <div class="flex mb-2 space-x-2 justify-start">
-                <span
-                  class="text-xs inline-block py-1 px-2.5 leading-none text-center whitespace-nowrap align-baseline font-bold bg-blue-600 text-white rounded-full"
-                  >${i['Category']}</span
-                >
-              </div>
-            </div>
-          </div>
-          `,
-            ),
-        );
+            const t = $('#items').DataTable({
+              data: items.map(i => [
+                i.id + '',
+                `<img src="${i.img}" class="h-10">`,
+                i.name,
+                mapping[i.category] || i.category,
+                `<a src="https://terraria.gamepedia.com/${i.name.replace(
+                  ' ',
+                  '_',
+                )}">Link</a>`,
+              ]),
+              columns: [
+                { title: 'ID' },
+                { title: 'Image' },
+                { title: 'Name' },
+                { title: 'Category' },
+              ],
+            });
 
-        $('#items').append(str);
-      }
+            $('#items tbody').on('click', 'tr', function () {
+              const name = $(this)?.get(0)?.children[2]?.innerHTML;
 
-      $.get('items.json', function (data) {
-        items = data;
-
-        search();
-      });
-
-      $('#item-search').on('keyup', function (e) {
-        search(e.target.value);
+              if (name) {
+                window
+                  .open(
+                    `https://terraria.gamepedia.com/${name.replace(' ', '_')}`,
+                    '_blank',
+                  )
+                  .focus();
+              }
+            });
+          });
+        });
       });
     </script>
   </body>
